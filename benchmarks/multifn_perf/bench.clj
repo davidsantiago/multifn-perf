@@ -27,7 +27,7 @@
 
 (defn work []
   (loop [acc 0
-         cntr 2000000]
+         cntr 1000000]
     (if (= 0 cntr)
       acc
       (recur (+ acc (add-something cntr))
@@ -35,7 +35,7 @@
 
 (defn work-prot [rec]
   (loop [acc 0
-         cntr 2000000]
+         cntr 1000000]
     (if (= 0 cntr)
       acc
       (recur (+ acc (add-something-prot rec cntr))
@@ -43,7 +43,7 @@
 
 (defcase contended-mfn :regular-fn
   []
-  (loop [acc 0 cntr 2000000]
+  (loop [acc 0 cntr 1000000]
     (if (= 0 cntr)
       acc
       (recur (+ acc (add-something-fn cntr))
@@ -67,12 +67,35 @@
         f4 (future (work))]
     (+ @f1 @f2 @f3 @f4)))
 
-(defcase contended-mfn :inline-protocol
+(defgoal single-threaded-protocol
+  "Compare various calling scenarios for protocols for comparison.")
+
+(defcase single-threaded-protocol :inline-protocol
   []
   (let [rec (->InlineRec)]
     (work-prot rec)))
 
-(defcase contended-mfn :extended-protocol
+(defcase single-threaded-protocol :extended-protocol
   []
   (let [rec (->ExtendedRec)]
     (work-prot rec)))
+
+(defcase single-threaded-protocol :hinted-inline-protocol
+  []
+  (let [^InlineRec rec (->InlineRec)]
+    (loop [acc 0
+           cntr 1000000]
+      (if (= 0 cntr)
+        acc
+        (recur (+ acc (add-something-prot rec cntr))
+               (dec cntr))))))
+
+(defcase single-threaded-protocol :hinted-extended-protocol
+  []
+  (let [^ExtendedRec rec (->ExtendedRec)]
+    (loop [acc 0
+           cntr 1000000]
+      (if (= 0 cntr)
+        acc
+        (recur (+ acc (add-something-prot rec cntr))
+               (dec cntr))))))
